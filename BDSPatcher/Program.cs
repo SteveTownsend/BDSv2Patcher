@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Mutagen.Bethesda;
+using Mutagen.Bethesda.FormKeys.SkyrimSE;
 using Mutagen.Bethesda.Synthesis;
 using Mutagen.Bethesda.Skyrim;
 using System.Threading.Tasks;
@@ -25,24 +26,9 @@ namespace BDSPatcher
         }
 
         private static readonly ModKey SkyrimModKey = ModKey.FromNameAndExtension("Skyrim.esm");
-        private static readonly ModKey UpdateModKey = ModKey.FromNameAndExtension("Update.esm");
-        private static readonly ModKey DawnguardModKey = ModKey.FromNameAndExtension("Dawnguard.esm");
-        private static readonly ModKey HearthFiresModKey = ModKey.FromNameAndExtension("HearthFires.esm");
-        private static readonly ModKey DragonbornModKey = ModKey.FromNameAndExtension("Dragonborn.esm");
         private static readonly ModKey USSEPModKey = ModKey.FromNameAndExtension("Unofficial Skyrim Special Edition Patch.esp");
         private static readonly ModKey BDSModKey = ModKey.FromNameAndExtension("Better Dynamic Snow.esp");
 
-        private static ISet<ModKey> ExcludedMods()
-        {
-            ISet<ModKey> excludedMods = new HashSet<ModKey>();
-            excludedMods.Add(SkyrimModKey);
-            excludedMods.Add(UpdateModKey);
-            excludedMods.Add(DawnguardModKey);
-            excludedMods.Add(HearthFiresModKey);
-            excludedMods.Add(DragonbornModKey);
-            excludedMods.Add(USSEPModKey);
-            return excludedMods;
-        }
         private static IReadOnlyDictionary<FormKey, IMaterialObjectGetter> MaterialMapping(ISkyrimModGetter bds)
         {
             var bdsMaterials = bds.MaterialObjects;
@@ -152,7 +138,8 @@ namespace BDSPatcher
                 throw new ArgumentException("Unable to get Better Dynamic Snow.esp plugin");
             }
             IReadOnlyDictionary<FormKey, IMaterialObjectGetter> materialMapping = MaterialMapping(bdsMod.Mod);
-            ISet<ModKey> skipMods = ExcludedMods();
+            var skipMods = ImplicitListings.GetListings(state.PatchMod.GameRelease).ToHashSet();
+            skipMods.Add(USSEPModKey);
 
             Console.WriteLine("{0} STAT", state.LoadOrder.PriorityOrder.WinningOverrides<IStaticGetter>().Count<IStaticGetter>());
             // skip STATs from excluded mods, provided BDS last patched the material

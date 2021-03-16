@@ -20,7 +20,7 @@ namespace BDSPatcher
                     ActionsForEmptyArgs = new RunDefaultPatcher()
                     {
                         IdentifyingModKey = "BDSPatcher.esp",
-                        TargetRelease = GameRelease.SkyrimSE,
+                        TargetRelease = GameRelease.SkyrimSE
                     }
                 });
         }

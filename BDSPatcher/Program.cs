@@ -11,18 +11,11 @@ namespace BDSPatcher
 {
     public class Program
     {
-        public static async Task<int> Main(string[] args)
+        public static Task<int> Main(string[] args)
         {
-            return await SynthesisPipeline.Instance
+            return SynthesisPipeline.Instance.SetTypicalOpen(GameRelease.SkyrimSE, "BDSPatcher.esp")
                 .AddPatch<ISkyrimMod, ISkyrimModGetter>(RunPatch)
-                .Run(args, new RunPreferences()
-                {
-                    ActionsForEmptyArgs = new RunDefaultPatcher()
-                    {
-                        IdentifyingModKey = "BDSPatcher.esp",
-                        TargetRelease = GameRelease.SkyrimSE
-                    }
-                });
+                .Run(args);
         }
 
         private static readonly ModKey SkyrimModKey = ModKey.FromNameAndExtension("Skyrim.esm");
@@ -38,95 +31,95 @@ namespace BDSPatcher
             }
             Dictionary<FormKey, IMaterialObjectGetter> mappings = new Dictionary<FormKey, IMaterialObjectGetter>();
             // SnowMaterialObjectNoise1P
-            IMaterialObjectGetter? material = GroupExt.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x39f5));
+            IMaterialObjectGetter? material = IGroupMixIns.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x39f5));
             if (material != null)
             {
-                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialObjectNoise1P, material);
+                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialObjectNoise1P.FormKey, material);
             }
             // SnowMaterialObject1P
-            material = GroupExt.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x1305));
+            material = IGroupMixIns.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x1305));
             if (material != null)
             {
-                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialObject1P, material);
+                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialObject1P.FormKey, material);
             }
             // SnowMaterialMountain1P
-            material = GroupExt.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x1868));
+            material = IGroupMixIns.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x1868));
             if (material != null)
             {
-                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialMountain1P, material);
+                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialMountain1P.FormKey, material);
             }
             // SnowMaterialObjectCustom03_1P
-            material = GroupExt.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x39f4));
+            material = IGroupMixIns.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x39f4));
             if (material != null)
             {
-                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialObjectCustom03_1P, material);
+                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialObjectCustom03_1P.FormKey, material);
             }
             // SnowMaterialMountainTrimLight1P
             // xEdit Script does not check the Form ID and so would not map this
-            material = GroupExt.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x2372));
+            material = IGroupMixIns.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x2372));
             if (material != null)
             {
-                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialMountainTrimLight1P, material);
+                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialMountainTrimLight1P.FormKey, material);
             }
             // SnowMaterialWinterhold
-            material = GroupExt.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x2373));
+            material = IGroupMixIns.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x2373));
             if (material != null)
             {
-                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialWinterhold, material);
+                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialWinterhold.FormKey, material);
             }
             // SnowMaterialMarkarthCliffs
-            material = GroupExt.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x1304));
+            material = IGroupMixIns.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x1304));
             if (material != null)
             {
-                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialMarkarthCliffs, material);
+                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialMarkarthCliffs.FormKey, material);
             }
             // SnowMaterialObjectLight1P
-            material = GroupExt.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x44b8));
+            material = IGroupMixIns.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x44b8));
             if (material != null)
             {
-                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialObjectLight1P, material);
+                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialObjectLight1P.FormKey, material);
             }
             // SnowMaterialFarm
-            material = GroupExt.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x12ef));
+            material = IGroupMixIns.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x12ef));
             if (material != null)
             {
-                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialFarm, material);
+                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialFarm.FormKey, material);
             }
             // SnowMaterialStockade1P
-            material = GroupExt.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x12f0));
+            material = IGroupMixIns.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x12f0));
             if (material != null)
             {
-                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialStockade1P, material);
+                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialStockade1P.FormKey, material);
             }
             // SnowMaterialMountainTrim1P
-            material = GroupExt.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x12f1));
+            material = IGroupMixIns.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x12f1));
             if (material != null)
             {
-                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialMountainTrim1P, material);
+                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialMountainTrim1P.FormKey, material);
             }
             // SnowMaterialRoadLight1P
-            material = GroupExt.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x2374));
+            material = IGroupMixIns.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x2374));
             if (material != null)
             {
-                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialRoadLight1P, material);
+                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialRoadLight1P.FormKey, material);
             }
             // SnowMaterialObjectCustom01_1P
-            material = GroupExt.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x39f2));
+            material = IGroupMixIns.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x39f2));
             if (material != null)
             {
-                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialObjectCustom01_1P, material);
+                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialObjectCustom01_1P.FormKey, material);
             }
             // SnowMaterialMountainLight1P
-            material = GroupExt.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x2361));
+            material = IGroupMixIns.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x2361));
             if (material != null)
             {
-                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialMountainLight1P, material);
+                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialMountainLight1P.FormKey, material);
             }
             // SnowMaterialObjectCustom02_1P
-            material = GroupExt.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x39f3));
+            material = IGroupMixIns.TryGetValue(bdsMaterials, new FormKey(BDSModKey, 0x39f3));
             if (material != null)
             {
-                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialObjectCustom02_1P, material);
+                mappings.Add(SSEForms.Skyrim.MaterialObject.SnowMaterialObjectCustom02_1P.FormKey, material);
             }
 
             return mappings;
@@ -138,7 +131,7 @@ namespace BDSPatcher
                 throw new ArgumentException("Unable to get Better Dynamic Snow.esp plugin");
             }
             IReadOnlyDictionary<FormKey, IMaterialObjectGetter> materialMapping = MaterialMapping(bdsMod.Mod);
-            var skipMods = ImplicitListings.GetListings(state.PatchMod.GameRelease).ToHashSet();
+            var skipMods = Implicits.Get(state.PatchMod.GameRelease).Listings.ToHashSet();
             skipMods.Add(USSEPModKey);
 
             Console.WriteLine("{0} STAT", state.LoadOrder.PriorityOrder.WinningOverrides<IStaticGetter>().Count<IStaticGetter>());
@@ -158,16 +151,6 @@ namespace BDSPatcher
 
                 var newStatic = state.PatchMod.Statics.GetOrAddAsOverride(target);
                 newStatic.Material = new FormLink<IMaterialObjectGetter>(mapped.FormKey);
-                //// TODO fix up SLAWF special case, data loss somehow
-                ///// https://www.nexusmods.com/skyrimspecialedition/mods/26138
-                //if (newStatic.EditorID == "RockCliff08_HeavySN_lawf")
-                //{
-                //    newStatic.Flags = Static.Flag.ConsideredSnow;
-                //}
-                //else
-                //{
-                //    newStatic.Flags = target.Flags;
-                //}
             }
         }
     }

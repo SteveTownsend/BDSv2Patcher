@@ -117,9 +117,9 @@ namespace BDSPatcher
             skipMods.Add(USSEPModKey);
 
             Console.WriteLine("{0} STAT", state.LoadOrder.PriorityOrder.WinningOverrides<IStaticGetter>().Count<IStaticGetter>());
-            // skip STATs from excluded mods, provided BDS last patched the material
+            // skip STATs where winning override is from excluded mods
             foreach (var target in state.LoadOrder.PriorityOrder.WinningOverrides<IStaticGetter>().
-                Where(stat => !skipMods.Contains(stat.FormKey.ModKey) || stat.Material.FormKey.ModKey != BDSModKey))
+                Where(stat => !skipMods.Contains(stat.FormKey.ModKey)))
             {
 
                 if (!materialMapping.TryGetValue(target.Material, out IMaterialObjectGetter? mapped) || mapped == null)

@@ -113,7 +113,7 @@ namespace BDSPatcher
                 throw new ArgumentException("Unable to get Better Dynamic Snow.esp plugin");
             }
             var materialMapping = MaterialMapping(bdsMod.Mod);
-            var skipMods = Implicits.Get(state.PatchMod.GameRelease).Listings;
+            var skipMods = Implicits.Get(state.PatchMod.GameRelease).Listings.ToHashSet();
             skipMods.Add(USSEPModKey);
 
             Console.WriteLine("{0} STAT", state.LoadOrder.PriorityOrder.WinningOverrides<IStaticGetter>().Count<IStaticGetter>());

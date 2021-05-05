@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Mutagen.Bethesda;
 using SSEForms = Mutagen.Bethesda.FormKeys.SkyrimSE;
@@ -18,6 +19,12 @@ namespace BDSPatcher
                 .SetTypicalOpen(GameRelease.SkyrimSE, "BDSPatcher.esp")
                 .AddPatch<ISkyrimMod, ISkyrimModGetter>(RunPatch)
                 .Run(args);
+        }
+
+        private static Config? configuration;
+        internal static Config Configuration
+        {
+            get => configuration!;
         }
 
         private static readonly ModKey USSEPModKey = ModKey.FromNameAndExtension("Unofficial Skyrim Special Edition Patch.esp");
@@ -108,6 +115,9 @@ namespace BDSPatcher
         }
         public static void RunPatch(IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
         {
+            string configFilePath = Path.Combine(state.ExtraSettingsDataPath, "config.json");
+            configuration = new Config(configFilePath);
+
             if (!state.LoadOrder.TryGetValue(BDSModKey, out IModListing<ISkyrimModGetter>? bdsMod) || bdsMod.Mod == null)
             {
                 throw new ArgumentException("Unable to get Better Dynamic Snow.esp plugin");
@@ -117,11 +127,20 @@ namespace BDSPatcher
             skipMods.Add(USSEPModKey);
 
             Console.WriteLine("{0} STAT", state.LoadOrder.PriorityOrder.WinningOverrides<IStaticGetter>().Count<IStaticGetter>());
-            // skip STATs where winning override is from excluded mods
+            // skip STATs where winning override is from excluded mods,or NIF is blacklisted
             foreach (var target in state.LoadOrder.PriorityOrder.WinningOverrides<IStaticGetter>().
                 Where(stat => !skipMods.Contains(stat.FormKey.ModKey)))
             {
-
+                if (target.Model != null && target.Model.File != null)
+                {
+                    if (!configuration.IsNifValid(target.Model.File))
+                    {
+                        Console.WriteLine("Skip blacklisted NIF {0} for STAT {1}:{2}/{3:X8}",
+                            target.Model.File, target.FormKey.ModKey.FileName,
+                            target.EditorID, target.FormKey.ID);
+                        continue;
+                    }
+                }
                 if (!materialMapping.TryGetValue(target.Material, out IMaterialObjectGetter? mapped) || mapped == null)
                 {
                     continue;
@@ -133,16 +152,6 @@ namespace BDSPatcher
 
                 var newStatic = state.PatchMod.Statics.GetOrAddAsOverride(target);
                 newStatic.Material = new FormLink<IMaterialObjectGetter>(mapped.FormKey);
-                //// TODO fix up SLAWF special case, data loss somehow
-                ///// https://www.nexusmods.com/skyrimspecialedition/mods/26138
-                //if (newStatic.EditorID == "RockCliff08_HeavySN_lawf")
-                //{
-                //    newStatic.Flags = Static.Flag.ConsideredSnow;
-                //}
-                //else
-                //{
-                //    newStatic.Flags = target.Flags;
-                //}
             }
         }
     }

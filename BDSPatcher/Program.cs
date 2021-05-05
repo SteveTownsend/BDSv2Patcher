@@ -137,7 +137,7 @@ namespace BDSPatcher
                     {
                         Console.WriteLine("Skip blacklisted NIF {0} for STAT {1}:{2}/{3:X8}",
                             target.Model.File, target.FormKey.ModKey.FileName,
-                            target.EditorID, target.FormKey.ID, target.Flags);
+                            target.EditorID, target.FormKey.ID);
                         continue;
                     }
                 }

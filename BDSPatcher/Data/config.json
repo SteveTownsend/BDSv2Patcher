@@ -1,8 +1,0 @@
-{
-  "general": {
-    // Blacklist NIFs: format is string1,string2|string3|string5,string6 where | separates entries
-    // and each comma-delimited substring in an entry must match for NIF to be excluded
-    // For Capital Windhelm SSE - skip NIF that causes CTD after patching with SYnthesis or scripts
-    "skipNifs": "SurWindhelmCustomMeshes,Experimental,whcenterNoColB2"
-  }
-}

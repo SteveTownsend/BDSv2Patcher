@@ -135,11 +135,12 @@ namespace BDSPatcher
                         continue;
                     }
                 }
-                if (!materialMapping.TryGetValue(target.Material, out IMaterialObjectGetter? mapped) || mapped == null)
+                IStaticGetter trueTarget = settings.CheckTrusted(state, target);
+                if (!materialMapping.TryGetValue(trueTarget.Material, out IMaterialObjectGetter? mapped) || mapped == null)
                 {
                     continue;
                 }
-                IStaticGetter trueTarget = settings.CheckTrusted(state, target);
+                // If we get here, either last override needs a patch, or we want to force override with a trusted mod's snow MATO
                 var newStatic = state.PatchMod.Statics.GetOrAddAsOverride(trueTarget);
                 if (trueTarget == target)
                 {

@@ -122,8 +122,7 @@ namespace BDSPatcher
 
             Console.WriteLine("{0} STAT", state.LoadOrder.PriorityOrder.WinningOverrides<IStaticGetter>().Count<IStaticGetter>());
             // skip STATs where winning override is from excluded mods,or NIF is blacklisted
-            foreach (var target in state.LoadOrder.PriorityOrder.WinningOverrides<IStaticGetter>().
-                Where(stat => !skipMods.Contains(stat.FormKey.ModKey)))
+            foreach (var target in state.LoadOrder.PriorityOrder.WinningOverrides<IStaticGetter>())
             {
                 if (target.Model != null && target.Model.File != null)
                 {
@@ -135,20 +134,24 @@ namespace BDSPatcher
                         continue;
                     }
                 }
-                IStaticGetter trueTarget = settings.CheckTrusted(state, target);
+                bool updated;
+                IStaticGetter trueTarget = settings.CheckTrusted(state, target, out updated);
                 if (!materialMapping.TryGetValue(trueTarget.Material, out IMaterialObjectGetter? mapped) || mapped == null)
                 {
                     continue;
                 }
                 // If we get here, either last override needs a patch, or we want to force override with a trusted mod's snow MATO
                 var newStatic = state.PatchMod.Statics.GetOrAddAsOverride(trueTarget);
-                if (trueTarget.FormKey == target.FormKey)
+                if (!updated)
                 {
-                    var matName = trueTarget.Material;
-                    Console.WriteLine("MATO {0:X8} mapped to BDS {1:X8} in STAT {2}:{3}/{4:X8}",
-                        matName.FormKey.ID, mapped.FormKey.ID, trueTarget.FormKey.ModKey.FileName,
-                        trueTarget.EditorID, trueTarget.FormKey.ID);
-                    newStatic.Material = new FormLink<IMaterialObjectGetter>(mapped.FormKey);
+                    if (!skipMods.Contains(trueTarget.FormKey.ModKey))
+                    {
+                        var matName = trueTarget.Material;
+                        Console.WriteLine("MATO {0:X8} mapped to BDS {1:X8} in STAT {2}:{3}/{4:X8}",
+                            matName.FormKey.ID, mapped.FormKey.ID, trueTarget.FormKey.ModKey.FileName,
+                            trueTarget.EditorID, trueTarget.FormKey.ID);
+                        newStatic.Material = new FormLink<IMaterialObjectGetter>(mapped.FormKey);
+                    }
                 }
                 else
                 {

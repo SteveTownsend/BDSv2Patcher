@@ -73,16 +73,17 @@ namespace BDSPatcher
             }
         }
 
-        public IStaticGetter CheckTrusted(IPatcherState<ISkyrimMod, ISkyrimModGetter> state, IStaticGetter target)
+        public IStaticGetter CheckTrusted(IPatcherState<ISkyrimMod, ISkyrimModGetter> state, IStaticGetter target, out bool updated)
         {
+            updated = false;
             if (fullModsTrusted.Count > 0)
             {
                 // check mods with better snow for this STAT record, use that target in the patch if present
                 IFormLinkGetter<IStaticGetter> statLink = target.AsLinkGetter();
-                var previousOverrides = statLink.ResolveAll(state.LinkCache);
+                var previousOverrides = statLink.ResolveAllContexts<ISkyrimMod, ISkyrimModGetter, IStatic, IStaticGetter>(state.LinkCache);
                 foreach (string modFilter in fullModsTrusted)
                 {
-                    var candidates = previousOverrides.Where(link => link.FormKey.ModKey.FileName.Contains(modFilter, StringComparison.OrdinalIgnoreCase));
+                    var candidates = previousOverrides.Where(link => link.ModKey.FileName.Contains(modFilter, StringComparison.OrdinalIgnoreCase));
                     if (candidates.Count() > 1)
                     {
                         Console.WriteLine("Trusted mod filter {0} matches {1} previous overrides for {2}/{3:X8}, should be 0 or 1",
@@ -90,7 +91,8 @@ namespace BDSPatcher
                     }
                     else if (candidates.Count() == 1)
                     {
-                        return candidates.First();
+                        updated = true;
+                        return candidates.First().Record;
                     }
                 }
             }

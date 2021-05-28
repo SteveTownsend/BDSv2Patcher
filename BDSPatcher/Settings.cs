@@ -86,12 +86,10 @@ namespace BDSPatcher
                     if (candidates.Count() > 1)
                     {
                         Console.WriteLine("Trusted mod filter {0} matches {1} previous overrides for {2}/{3:X8}, should be 0 or 1",
-                            modFilter, candidates.Count(), target.FormKey.ID, target.FormKey.ModKey.FileName);
+                            modFilter, candidates.Count(), target.FormKey.ModKey.FileName, target.FormKey.ID);
                     }
                     else if (candidates.Count() == 1)
                     {
-                        Console.WriteLine("Trusted mod filter {0} has unique previous override for {1}/{2:X8}",
-                            modFilter, target.FormKey.ID, target.FormKey.ModKey.FileName);
                         return candidates.First();
                     }
                 }

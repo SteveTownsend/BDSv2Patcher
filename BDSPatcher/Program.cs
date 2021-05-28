@@ -150,6 +150,11 @@ namespace BDSPatcher
                         target.EditorID, target.FormKey.ID);
                     newStatic.Material = new FormLink<IMaterialObjectGetter>(mapped.FormKey);
                 }
+                else
+                {
+                    Console.WriteLine("Force-promote trusted mod STAT {0}:{1}/{2:X8}",
+                        target.FormKey.ModKey.FileName, target.EditorID, target.FormKey.ID);
+                }
             }
         }
     }

@@ -139,13 +139,16 @@ namespace BDSPatcher
                 {
                     continue;
                 }
-                var matName = target.Material;
-                Console.WriteLine("MATO {0:X8} mapped to BDS {1:X8} in STAT {2}:{3}/{4:X8} with flags {5}",
-                    matName.FormKey.ID, mapped.FormKey.ID, target.FormKey.ModKey.FileName,
-                    target.EditorID, target.FormKey.ID, target.Flags);
-
-                var newStatic = state.PatchMod.Statics.GetOrAddAsOverride(target);
-                newStatic.Material = new FormLink<IMaterialObjectGetter>(mapped.FormKey);
+                IStaticGetter trueTarget = settings.CheckTrusted(state, target);
+                var newStatic = state.PatchMod.Statics.GetOrAddAsOverride(trueTarget);
+                if (trueTarget == target)
+                {
+                    var matName = target.Material;
+                    Console.WriteLine("MATO {0:X8} mapped to BDS {1:X8} in STAT {2}:{3}/{4:X8}",
+                        matName.FormKey.ID, mapped.FormKey.ID, target.FormKey.ModKey.FileName,
+                        target.EditorID, target.FormKey.ID);
+                    newStatic.Material = new FormLink<IMaterialObjectGetter>(mapped.FormKey);
+                }
             }
         }
     }

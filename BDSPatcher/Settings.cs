@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Mutagen.Bethesda.Skyrim;
+using Mutagen.Bethesda.Synthesis;
 using Mutagen.Bethesda.Synthesis.Settings;
 
 namespace BDSPatcher
@@ -38,6 +40,61 @@ namespace BDSPatcher
                     _fullBlackList = new List<string[]>(_nifBlackList.Concat(_defaultNifBlackList));
                 return _fullBlackList;
             }
+        }
+
+        private List<string> _modsTrusted= new List<string>();
+        private static List<string> DefaultModsTrusted()
+        {
+            var defaults = new List<string>();
+            defaults.Add("WiZkiD Grass and Landscapes.");
+            return defaults;
+        }
+        private static readonly List<string> _defaultModsTrusted = DefaultModsTrusted();
+        [SynthesisSettingName("Mods with better snow than BDS v2")]
+        [SynthesisTooltip("Each entry is a string matching the name of a mod that has proper snow, and should be forwarded to the patch. Prefer 'MyModName.' to avoid having multiple entries for esl/esp/esm variants.")]
+        [SynthesisDescription("List of names of mods that have better snow than BDS v2.")]
+        public List<string> ModsTrusted
+        {
+            get { return _modsTrusted; }
+            set { _modsTrusted = value; }
+        }
+        private List<string>? _fullModsTrusted;
+        private List<string> fullModsTrusted
+        {
+            get
+            {
+                if (_fullModsTrusted is null)
+                {
+                    // filter out mods that are not matched in the Load Order
+                    _fullModsTrusted = new List<string>(_modsTrusted.Concat(_defaultModsTrusted));
+                }
+                return _fullModsTrusted;
+            }
+        }
+
+        public IStaticGetter CheckTrusted(IPatcherState<ISkyrimMod, ISkyrimModGetter> state, IStaticGetter target)
+        {
+            if (fullModsTrusted.Count > 0)
+            {
+                // check mods with better snow for this STAT record, use that target in the patch if present
+                var previousOverrides = state.LinkCache.ResolveAllContexts<IStatic, IStaticGetter>(target.FormKey);
+                foreach (string modFilter in fullModsTrusted)
+                {
+                    var candidates = previousOverrides.Where(o => o.ModKey.FileName.Contains(modFilter, StringComparison.OrdinalIgnoreCase));
+                    if (candidates.Count() > 1)
+                    {
+                        Console.WriteLine("Trusted mod filter {0} matches {1} previous overrides for {2}/{3:X8}, should be 0 or 1",
+                            modFilter, candidates.Count(), target.FormKey.ID, target.FormKey.ModKey.FileName);
+                    }
+                    else if (candidates.Count() == 1)
+                    {
+                        Console.WriteLine("Trusted mod filter {0} has unique previous override for {1}/{2:X8}",
+                            modFilter, target.FormKey.ID, target.FormKey.ModKey.FileName);
+                        return candidates.First().Record;
+                    }
+                }
+            }
+            return target;
         }
 
         public bool IsNifValid(string nifPath)

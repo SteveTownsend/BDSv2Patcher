@@ -44,13 +44,6 @@ namespace BDSPatcher
         }
 
         private List<string> _modsTrusted= new List<string>();
-        private static List<string> DefaultModsTrusted()
-        {
-            var defaults = new List<string>();
-            defaults.Add("WiZkiD Grass and Landscapes.");
-            return defaults;
-        }
-        private static readonly List<string> _defaultModsTrusted = DefaultModsTrusted();
         [SynthesisSettingName("Mods with better snow than BDS v2")]
         [SynthesisTooltip("Each entry is a string matching the name of a mod that has proper snow, and should be forwarded to the patch. Prefer 'MyModName.' to avoid having multiple entries for esl/esp/esm variants.")]
         [SynthesisDescription("List of names of mods that have better snow than BDS v2.")]
@@ -59,29 +52,16 @@ namespace BDSPatcher
             get { return _modsTrusted; }
             set { _modsTrusted = value; }
         }
-        private List<string>? _fullModsTrusted;
-        private List<string> fullModsTrusted
-        {
-            get
-            {
-                if (_fullModsTrusted is null)
-                {
-                    // filter out mods that are not matched in the Load Order
-                    _fullModsTrusted = new List<string>(_modsTrusted.Concat(_defaultModsTrusted));
-                }
-                return _fullModsTrusted;
-            }
-        }
 
         public IStaticGetter CheckTrusted(IPatcherState<ISkyrimMod, ISkyrimModGetter> state, IStaticGetter target, out bool updated)
         {
             updated = false;
-            if (fullModsTrusted.Count > 0)
+            if (ModsTrusted.Count > 0)
             {
                 // check mods with better snow for this STAT record, use that target in the patch if present
                 IFormLinkGetter<IStaticGetter> statLink = target.AsLinkGetter();
                 var previousOverrides = statLink.ResolveAllContexts<ISkyrimMod, ISkyrimModGetter, IStatic, IStaticGetter>(state.LinkCache);
-                foreach (string modFilter in fullModsTrusted)
+                foreach (string modFilter in ModsTrusted)
                 {
                     var candidates = previousOverrides.Where(link => link.ModKey.FileName.Contains(modFilter, StringComparison.OrdinalIgnoreCase));
                     if (candidates.Count() > 1)

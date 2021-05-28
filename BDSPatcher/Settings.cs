@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Mutagen.Bethesda;
 using Mutagen.Bethesda.Skyrim;
 using Mutagen.Bethesda.Synthesis;
 using Mutagen.Bethesda.Synthesis.Settings;
@@ -77,10 +78,11 @@ namespace BDSPatcher
             if (fullModsTrusted.Count > 0)
             {
                 // check mods with better snow for this STAT record, use that target in the patch if present
-                var previousOverrides = state.LinkCache.ResolveAllContexts<IStatic, IStaticGetter>(target.FormKey);
+                IFormLinkGetter<IStaticGetter> statLink = target.AsLinkGetter();
+                var previousOverrides = statLink.ResolveAll(state.LinkCache);
                 foreach (string modFilter in fullModsTrusted)
                 {
-                    var candidates = previousOverrides.Where(o => o.ModKey.FileName.Contains(modFilter, StringComparison.OrdinalIgnoreCase));
+                    var candidates = previousOverrides.Where(link => link.FormKey.ModKey.FileName.Contains(modFilter, StringComparison.OrdinalIgnoreCase));
                     if (candidates.Count() > 1)
                     {
                         Console.WriteLine("Trusted mod filter {0} matches {1} previous overrides for {2}/{3:X8}, should be 0 or 1",
@@ -90,7 +92,7 @@ namespace BDSPatcher
                     {
                         Console.WriteLine("Trusted mod filter {0} has unique previous override for {1}/{2:X8}",
                             modFilter, target.FormKey.ID, target.FormKey.ModKey.FileName);
-                        return candidates.First().Record;
+                        return candidates.First();
                     }
                 }
             }

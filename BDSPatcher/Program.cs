@@ -142,18 +142,18 @@ namespace BDSPatcher
                 }
                 // If we get here, either last override needs a patch, or we want to force override with a trusted mod's snow MATO
                 var newStatic = state.PatchMod.Statics.GetOrAddAsOverride(trueTarget);
-                if (trueTarget == target)
+                if (trueTarget.FormKey == target.FormKey)
                 {
-                    var matName = target.Material;
+                    var matName = trueTarget.Material;
                     Console.WriteLine("MATO {0:X8} mapped to BDS {1:X8} in STAT {2}:{3}/{4:X8}",
-                        matName.FormKey.ID, mapped.FormKey.ID, target.FormKey.ModKey.FileName,
-                        target.EditorID, target.FormKey.ID);
+                        matName.FormKey.ID, mapped.FormKey.ID, trueTarget.FormKey.ModKey.FileName,
+                        trueTarget.EditorID, trueTarget.FormKey.ID);
                     newStatic.Material = new FormLink<IMaterialObjectGetter>(mapped.FormKey);
                 }
                 else
                 {
                     Console.WriteLine("Force-promote trusted mod STAT {0}:{1}/{2:X8}",
-                        target.FormKey.ModKey.FileName, target.EditorID, target.FormKey.ID);
+                        trueTarget.FormKey.ModKey.FileName, trueTarget.EditorID, trueTarget.FormKey.ID);
                 }
             }
         }

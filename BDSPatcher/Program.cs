@@ -135,14 +135,16 @@ namespace BDSPatcher
                         continue;
                     }
                 }
-                bool updated;
-                IStaticGetter trueTarget = settings.CheckTrusted(state, target, out updated);
+                IStaticGetter trueTarget = settings.CheckTrusted(state, target, out var updated, out var filename);
                 if (!materialMapping.TryGetValue(trueTarget.Material, out IMaterialObjectGetter? mapped) || mapped == null)
                 {
                     continue;
                 }
                 // If we get here, either last override needs a patch, or we want to force override with a trusted mod's snow MATO
-                var newStatic = state.PatchMod.Statics.GetOrAddAsOverride(trueTarget);
+                if (!state.PatchMod.Statics.TryGetOrAddAsOverride<Static, IStaticGetter>(trueTarget.AsLink(), state.LinkCache, out var newStatic) || newStatic == null)
+                {
+                    continue;
+                }
                 if (!updated)
                 {
                     if (!skipMods.Contains(trueTarget.FormKey.ModKey))
@@ -156,8 +158,8 @@ namespace BDSPatcher
                 }
                 else
                 {
-                    Console.WriteLine("Force-promote trusted mod STAT {0}:{1}/{2:X8}",
-                        trueTarget.FormKey.ModKey.FileName, trueTarget.EditorID, trueTarget.FormKey.ID);
+                    Console.WriteLine("Force-promote STAT {0}:{1}/{2:X8} from trusted mod '{3}'",
+                        trueTarget.FormKey.ModKey.FileName, trueTarget.EditorID, trueTarget.FormKey.ID, filename);
                 }
             }
         }

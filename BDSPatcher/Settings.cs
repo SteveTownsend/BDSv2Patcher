@@ -88,10 +88,11 @@ namespace BDSPatcher
         }
 
         IPatcherState<ISkyrimMod, ISkyrimModGetter>? _state;
-        public IStaticGetter CheckTrusted(IPatcherState<ISkyrimMod, ISkyrimModGetter> state, IStaticGetter target, out bool updated)
+        public IStaticGetter CheckTrusted(IPatcherState<ISkyrimMod, ISkyrimModGetter> state, IStaticGetter target, out bool updated, out string filename)
         {
             _state = state;
             updated = false;
+            filename = String.Empty;
             if (TrustedMods.Count > 0)
             {
                 // check mods with better snow for this STAT record, use that target in the patch if present
@@ -100,6 +101,7 @@ namespace BDSPatcher
                 {
                     if (mod!.Mod!.Statics.TryGetValue(target.FormKey, out var myStat) && myStat != null)
                     {
+                        filename = mod.ModKey.FileName;
                         updated = true;
                         return myStat;
                     }

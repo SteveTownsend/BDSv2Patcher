@@ -44,6 +44,13 @@ namespace BDSPatcher
         }
 
         private List<string> _modsTrusted= new List<string>();
+        private static List<string> DefaultModsTrusted()
+        {
+            var defaults = new List<string>();
+            defaults.Add("WiZkiD Grass and Landscapes.");
+            return defaults;
+        }
+        private static readonly List<string> _defaultModsTrusted = DefaultModsTrusted();
         [SynthesisSettingName("Mods with better snow than BDS v2")]
         [SynthesisTooltip("Each entry is a string matching the name of a mod that has proper snow, and should be forwarded to the patch. Prefer 'MyModName.' to avoid having multiple entries for esl/esp/esm variants.")]
         [SynthesisDescription("List of names of mods that have better snow than BDS v2.")]
@@ -53,26 +60,48 @@ namespace BDSPatcher
             set { _modsTrusted = value; }
         }
 
+        private HashSet<IModListing<ISkyrimModGetter>>? _trustedMods;
+        public HashSet<IModListing<ISkyrimModGetter>> TrustedMods
+        {
+    		get
+            {
+                if (_trustedMods == null)
+                {
+                    var modKeys = new List<ModKey>();
+                    IList<ModKey> modFiles = _state!.LoadOrder.Keys.ToList();
+                    foreach (string modFilter in ModsTrusted.Concat(_defaultModsTrusted))
+                    {
+                        modKeys.AddRange(modFiles.Where(modKey => modKey.FileName.Contains(modFilter, StringComparison.OrdinalIgnoreCase)));
+                    }
+                    _trustedMods = new HashSet<IModListing<ISkyrimModGetter>>();
+                    foreach (ModKey modKey in modKeys)
+                    {
+                        IModListing<ISkyrimModGetter> mod = _state.LoadOrder[modKey];
+                        if (mod != null && mod.Mod != null)
+                        {
+                            _trustedMods.Add(mod);
+                        }
+                    }
+                }
+                return _trustedMods;
+            }
+        }
+
+        IPatcherState<ISkyrimMod, ISkyrimModGetter>? _state;
         public IStaticGetter CheckTrusted(IPatcherState<ISkyrimMod, ISkyrimModGetter> state, IStaticGetter target, out bool updated)
         {
+            _state = state;
             updated = false;
-            if (ModsTrusted.Count > 0)
+            if (TrustedMods.Count > 0)
             {
                 // check mods with better snow for this STAT record, use that target in the patch if present
                 IFormLinkGetter<IStaticGetter> statLink = target.AsLinkGetter();
-                var previousOverrides = statLink.ResolveAllContexts<ISkyrimMod, ISkyrimModGetter, IStatic, IStaticGetter>(state.LinkCache);
-                foreach (string modFilter in ModsTrusted)
+                foreach (IModListing<ISkyrimModGetter> mod in TrustedMods)
                 {
-                    var candidates = previousOverrides.Where(link => link.ModKey.FileName.Contains(modFilter, StringComparison.OrdinalIgnoreCase));
-                    if (candidates.Count() > 1)
-                    {
-                        Console.WriteLine("Trusted mod filter {0} matches {1} previous overrides for {2}/{3:X8}, should be 0 or 1",
-                            modFilter, candidates.Count(), target.FormKey.ModKey.FileName, target.FormKey.ID);
-                    }
-                    else if (candidates.Count() == 1)
+                    if (mod!.Mod!.Statics.TryGetValue(target.FormKey, out var myStat) && myStat != null)
                     {
                         updated = true;
-                        return candidates.First().Record;
+                        return myStat;
                     }
                 }
             }

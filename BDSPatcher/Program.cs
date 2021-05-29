@@ -122,8 +122,12 @@ namespace BDSPatcher
 
             Console.WriteLine("{0} STAT", state.LoadOrder.PriorityOrder.WinningOverrides<IStaticGetter>().Count<IStaticGetter>());
             // skip STATs where winning override is from excluded mods,or NIF is blacklisted
+            ISet<FormKey> doneForms = new HashSet<FormKey>();
             foreach (var target in state.LoadOrder.PriorityOrder.WinningOverrides<IStaticGetter>())
             {
+                if (doneForms.Contains(target.FormKey))
+                    continue;
+
                 if (target.Model != null && target.Model.File != null)
                 {
                     if (!settings.IsNifValid(target.Model.File))
@@ -158,6 +162,7 @@ namespace BDSPatcher
                     Console.WriteLine("Force-promote trusted mod STAT {0}:{1}/{2:X8}",
                         trueTarget.FormKey.ModKey.FileName, trueTarget.EditorID, trueTarget.FormKey.ID);
                 }
+                doneForms.Add(trueTarget.FormKey);
             }
         }
     }

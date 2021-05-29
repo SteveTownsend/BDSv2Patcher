@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Mutagen.Bethesda;
+using Mutagen.Bethesda.Skyrim;
+using Mutagen.Bethesda.Synthesis;
 using Mutagen.Bethesda.Synthesis.Settings;
 
 namespace BDSPatcher
@@ -38,6 +41,73 @@ namespace BDSPatcher
                     _fullBlackList = new List<string[]>(_nifBlackList.Concat(_defaultNifBlackList));
                 return _fullBlackList;
             }
+        }
+
+        private List<string> _modsTrusted= new List<string>();
+        private static List<string> DefaultModsTrusted()
+        {
+            var defaults = new List<string>();
+            defaults.Add("WiZkiD Grass and Landscapes.");
+            return defaults;
+        }
+        private static readonly List<string> _defaultModsTrusted = DefaultModsTrusted();
+        [SynthesisSettingName("Mods with better snow than BDS v2")]
+        [SynthesisTooltip("Each entry is a string matching the name of a mod that has proper snow, and should be forwarded to the patch. Prefer 'MyModName.' to avoid having multiple entries for esl/esp/esm variants.")]
+        [SynthesisDescription("List of names of mods that have better snow than BDS v2.")]
+        public List<string> ModsTrusted
+        {
+            get { return _modsTrusted; }
+            set { _modsTrusted = value; }
+        }
+
+        private HashSet<IModListing<ISkyrimModGetter>>? _trustedMods;
+        public HashSet<IModListing<ISkyrimModGetter>> TrustedMods
+        {
+    		get
+            {
+                if (_trustedMods == null)
+                {
+                    var modKeys = new List<ModKey>();
+                    IList<ModKey> modFiles = _state!.LoadOrder.Keys.ToList();
+                    foreach (string modFilter in ModsTrusted.Concat(_defaultModsTrusted))
+                    {
+                        modKeys.AddRange(modFiles.Where(modKey => modKey.FileName.Contains(modFilter, StringComparison.OrdinalIgnoreCase)));
+                    }
+                    _trustedMods = new HashSet<IModListing<ISkyrimModGetter>>();
+                    foreach (ModKey modKey in modKeys)
+                    {
+                        IModListing<ISkyrimModGetter> mod = _state.LoadOrder[modKey];
+                        if (mod != null && mod.Mod != null)
+                        {
+                            _trustedMods.Add(mod);
+                        }
+                    }
+                }
+                return _trustedMods;
+            }
+        }
+
+        IPatcherState<ISkyrimMod, ISkyrimModGetter>? _state;
+        public IStaticGetter CheckTrusted(IPatcherState<ISkyrimMod, ISkyrimModGetter> state, IStaticGetter target, out bool updated, out string filename)
+        {
+            _state = state;
+            updated = false;
+            filename = String.Empty;
+            if (TrustedMods.Count > 0)
+            {
+                // check mods with better snow for this STAT record, use that target in the patch if present
+                IFormLinkGetter<IStaticGetter> statLink = target.AsLinkGetter();
+                foreach (IModListing<ISkyrimModGetter> mod in TrustedMods)
+                {
+                    if (mod!.Mod!.Statics.TryGetValue(target.FormKey, out var myStat) && myStat != null)
+                    {
+                        filename = mod.ModKey.FileName;
+                        updated = true;
+                        return myStat;
+                    }
+                }
+            }
+            return target;
         }
 
         public bool IsNifValid(string nifPath)

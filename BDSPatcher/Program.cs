@@ -120,10 +120,10 @@ namespace BDSPatcher
             var skipMods = Implicits.Get(state.PatchMod.GameRelease).Listings.ToHashSet();
             skipMods.Add(USSEPModKey);
 
-            Console.WriteLine("{0} STAT", state.LoadOrder.PriorityOrder.WinningOverrides<IStaticGetter>().Count<IStaticGetter>());
+            var getters = state.LoadOrder.PriorityOrder.WinningOverrides<IStaticGetter>();
+            Console.WriteLine("{0} STAT", getters.Count<IStaticGetter>());
             // skip STATs where winning override is from excluded mods,or NIF is blacklisted
-            foreach (var target in state.LoadOrder.PriorityOrder.WinningOverrides<IStaticGetter>().
-                Where(stat => !skipMods.Contains(stat.FormKey.ModKey)))
+            foreach (var target in getters)
             {
                 if (target.Model != null && target.Model.File != null)
                 {
@@ -135,17 +135,32 @@ namespace BDSPatcher
                         continue;
                     }
                 }
-                if (!materialMapping.TryGetValue(target.Material, out IMaterialObjectGetter? mapped) || mapped == null)
+                IStaticGetter trueTarget = settings.CheckTrusted(state, target, out var updated, out var filename);
+                if (!materialMapping.TryGetValue(trueTarget.Material, out IMaterialObjectGetter? mapped) || mapped == null)
                 {
                     continue;
                 }
-                var matName = target.Material;
-                Console.WriteLine("MATO {0:X8} mapped to BDS {1:X8} in STAT {2}:{3}/{4:X8} with flags {5}",
-                    matName.FormKey.ID, mapped.FormKey.ID, target.FormKey.ModKey.FileName,
-                    target.EditorID, target.FormKey.ID, target.Flags);
-
-                var newStatic = state.PatchMod.Statics.GetOrAddAsOverride(target);
-                newStatic.Material = new FormLink<IMaterialObjectGetter>(mapped.FormKey);
+                // If we get here, either last override needs a patch, or we want to force override with a trusted mod's snow MATO
+                if (!state.PatchMod.Statics.TryGetOrAddAsOverride<Static, IStaticGetter>(trueTarget.AsLink(), state.LinkCache, out var newStatic) || newStatic == null)
+                {
+                    continue;
+                }
+                if (!updated)
+                {
+                    if (!skipMods.Contains(trueTarget.FormKey.ModKey))
+                    {
+                        var matName = trueTarget.Material;
+                        Console.WriteLine("MATO {0:X8} mapped to BDS {1:X8} in STAT {2}:{3}/{4:X8}",
+                            matName.FormKey.ID, mapped.FormKey.ID, trueTarget.FormKey.ModKey.FileName,
+                            trueTarget.EditorID, trueTarget.FormKey.ID);
+                        newStatic.Material = new FormLink<IMaterialObjectGetter>(mapped.FormKey);
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Force-promote STAT {0}:{1}/{2:X8} from trusted mod '{3}'",
+                        trueTarget.FormKey.ModKey.FileName, trueTarget.EditorID, trueTarget.FormKey.ID, filename);
+                }
             }
         }
     }

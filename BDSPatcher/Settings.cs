@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using Mutagen.Bethesda;
+using Mutagen.Bethesda.Plugins;
+using Mutagen.Bethesda.Plugins.Order;
 using Mutagen.Bethesda.Skyrim;
 using Mutagen.Bethesda.Synthesis;
 using Mutagen.Bethesda.Synthesis.Settings;
@@ -71,7 +73,7 @@ namespace BDSPatcher
                     IList<ModKey> modFiles = _state!.LoadOrder.Keys.ToList();
                     foreach (string modFilter in ModsTrusted.Concat(_defaultModsTrusted))
                     {
-                        modKeys.AddRange(modFiles.Where(modKey => modKey.FileName.Contains(modFilter, StringComparison.OrdinalIgnoreCase)));
+                        modKeys.AddRange(modFiles.Where(modKey => modKey.FileName.String.Contains(modFilter, StringComparison.OrdinalIgnoreCase)));
                     }
                     _trustedMods = new HashSet<IModListing<ISkyrimModGetter>>();
                     foreach (ModKey modKey in modKeys)

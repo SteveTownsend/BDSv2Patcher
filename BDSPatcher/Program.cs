@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Mutagen.Bethesda;
 using SSEForms = Mutagen.Bethesda.FormKeys.SkyrimSE;
@@ -8,6 +7,8 @@ using Mutagen.Bethesda.Synthesis;
 using Mutagen.Bethesda.Skyrim;
 using System.Threading.Tasks;
 using Noggog;
+using Mutagen.Bethesda.Plugins;
+using Mutagen.Bethesda.Plugins.Order;
 
 namespace BDSPatcher
 {
@@ -112,7 +113,7 @@ namespace BDSPatcher
         }
         public static void RunPatch(IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
         {
-            if (!state.LoadOrder.TryGetValue(BDSModKey, out IModListing<ISkyrimModGetter>? bdsMod) || bdsMod.Mod == null)
+            if (!state.LoadOrder.TryGetValue(BDSModKey, out IModListing<ISkyrimModGetter>? bdsMod) || bdsMod == null || bdsMod.Mod == null)
             {
                 throw new ArgumentException("Unable to get Better Dynamic Snow.esp plugin");
             }

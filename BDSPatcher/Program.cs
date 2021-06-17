@@ -148,7 +148,8 @@ namespace BDSPatcher
                 }
                 if (!updated)
                 {
-                    if (!skipMods.Contains(trueTarget.FormKey.ModKey))
+                    // if BDS v2 updates this record, we always patch it. Otherwise, trust game files if this is a record from there.
+                    if (bdsMod.Mod.Statics.ContainsKey(trueTarget.FormKey) || !skipMods.Contains(trueTarget.FormKey.ModKey))
                     {
                         var matName = trueTarget.Material;
                         Console.WriteLine("MATO {0:X8} mapped to BDS {1:X8} in STAT {2}:{3}/{4:X8}",

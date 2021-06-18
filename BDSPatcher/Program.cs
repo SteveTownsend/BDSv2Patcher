@@ -162,7 +162,7 @@ namespace BDSPatcher
                     {
                         Console.WriteLine("Force-promote STAT {0}:{1}/{2:X8} from trusted mod '{3}'",
                             trueContext.ModKey.FileName, trueWinner.EditorID, trueWinner.FormKey.ID, filename);
-                        state.PatchMod.Statics.TryGetOrAddAsOverride<Static, IStaticGetter>(trueWinner.AsLink(), state.LinkCache, out var newStatic);
+                        state.PatchMod.Statics.GetOrAddAsOverride(trueWinner);
                     }
                     else
                     {
@@ -178,10 +178,7 @@ namespace BDSPatcher
                     {
                         continue;
                     }
-                    if (!state.PatchMod.Statics.TryGetOrAddAsOverride<Static, IStaticGetter>(trueWinner.AsLink(), state.LinkCache, out var newStatic) || newStatic == null)
-                    {
-                        continue;
-                    }
+                    var newStatic = state.PatchMod.Statics.GetOrAddAsOverride(trueWinner);
                     var matName = trueContext.Record.Material;
                     Console.WriteLine("MATO {0:X8} mapped to BDS {1:X8} in STAT {2}:{3}/{4:X8}",
                         matName.FormKey.ID, mapped.FormKey.ID, trueWinner.FormKey.ModKey.FileName, trueWinner.EditorID, trueWinner.FormKey.ID);

@@ -90,10 +90,10 @@ namespace BDSPatcher
         }
 
         IPatcherState<ISkyrimMod, ISkyrimModGetter>? _state;
-        public IStaticGetter CheckTrusted(IPatcherState<ISkyrimMod, ISkyrimModGetter> state, IStaticGetter target, out bool updated, out string filename)
+        public IStaticGetter CheckTrusted(IPatcherState<ISkyrimMod, ISkyrimModGetter> state, IStaticGetter target, out bool trusted, out string filename)
         {
             _state = state;
-            updated = false;
+            trusted = false;
             filename = String.Empty;
             if (TrustedMods.Count > 0)
             {
@@ -104,7 +104,7 @@ namespace BDSPatcher
                     if (mod!.Mod!.Statics.TryGetValue(target.FormKey, out var myStat) && myStat != null)
                     {
                         filename = mod.ModKey.FileName;
-                        updated = true;
+                        trusted = true;
                         return myStat;
                     }
                 }

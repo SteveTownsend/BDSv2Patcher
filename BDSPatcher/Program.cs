@@ -136,18 +136,42 @@ namespace BDSPatcher
                         continue;
                     }
                 }
-                IStaticGetter trueTarget = settings.CheckTrusted(state, target, out var updated, out var filename);
-                if (!materialMapping.TryGetValue(trueTarget.Material, out IMaterialObjectGetter? mapped) || mapped == null)
+                // Do not patch winning override from game files or USSEP
+                if (skipMods.Contains(target.FormKey.ModKey))
                 {
+                    Console.WriteLine("Skip STAT {0}/{1:X8} with winning override in '{2}'",
+                        target.EditorID, target.FormKey.ID, target.FormKey.ModKey.FileName);
+                }
+
+                // Check whether we want to force override with a trusted mod's snow MATO
+                IStaticGetter trueTarget = settings.CheckTrusted(state, target, out var trusted, out var filename);
+                if (trusted)
+                {
+                    // Use trusted mod MATO. If it's the winning override then no-op, to avoid ITPO.
+                    if (trueTarget != target)
+                    {
+                        Console.WriteLine("Force-promote STAT {0}:{1}/{2:X8} from trusted mod '{3}'",
+                            trueTarget.FormKey.ModKey.FileName, trueTarget.EditorID, trueTarget.FormKey.ID, filename);
+                        state.PatchMod.Statics.TryGetOrAddAsOverride<Static, IStaticGetter>(trueTarget.AsLink(), state.LinkCache, out var newStatic);
+                    }
+                    else
+                    {
+                        Console.WriteLine("STAT {0}:{1}/{2:X8} from trusted mod '{3}' is already the winning override",
+                            trueTarget.FormKey.ModKey.FileName, trueTarget.EditorID, trueTarget.FormKey.ID, filename);
+                    }
                     continue;
                 }
-                // If we get here, either last override needs a patch, or we want to force override with a trusted mod's snow MATO
-                if (!state.PatchMod.Statics.TryGetOrAddAsOverride<Static, IStaticGetter>(trueTarget.AsLink(), state.LinkCache, out var newStatic) || newStatic == null)
+                else
                 {
-                    continue;
-                }
-                if (!updated)
-                {
+                    // MATO mapping may be required
+                    if (!materialMapping.TryGetValue(trueTarget.Material, out IMaterialObjectGetter? mapped) || mapped == null)
+                    {
+                        continue;
+                    }
+                    if (!state.PatchMod.Statics.TryGetOrAddAsOverride<Static, IStaticGetter>(trueTarget.AsLink(), state.LinkCache, out var newStatic) || newStatic == null)
+                    {
+                        continue;
+                    }
                     // if BDS v2 updates this record, we always patch it. Otherwise, trust game files if this is a record from there.
                     if (bdsMod.Mod.Statics.ContainsKey(trueTarget.FormKey) || !skipMods.Contains(trueTarget.FormKey.ModKey))
                     {
@@ -157,11 +181,6 @@ namespace BDSPatcher
                             trueTarget.EditorID, trueTarget.FormKey.ID);
                         newStatic.Material = new FormLink<IMaterialObjectGetter>(mapped.FormKey);
                     }
-                }
-                else
-                {
-                    Console.WriteLine("Force-promote STAT {0}:{1}/{2:X8} from trusted mod '{3}'",
-                        trueTarget.FormKey.ModKey.FileName, trueTarget.EditorID, trueTarget.FormKey.ID, filename);
                 }
             }
         }

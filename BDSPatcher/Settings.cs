@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Mutagen.Bethesda;
 using Mutagen.Bethesda.Plugins;
+using Mutagen.Bethesda.Plugins.Cache;
 using Mutagen.Bethesda.Plugins.Order;
 using Mutagen.Bethesda.Skyrim;
 using Mutagen.Bethesda.Synthesis;
@@ -62,54 +63,46 @@ namespace BDSPatcher
             set { _modsTrusted = value; }
         }
 
-        private HashSet<IModListing<ISkyrimModGetter>>? _trustedMods;
-        public HashSet<IModListing<ISkyrimModGetter>> TrustedMods
+        private HashSet<ModKey>? _trustedMods;
+        public HashSet<ModKey> TrustedMods
         {
     		get
             {
                 if (_trustedMods == null)
                 {
                     var modKeys = new List<ModKey>();
-                    IList<ModKey> modFiles = _state!.LoadOrder.Keys.ToList();
+                    IList<ModKey> modFiles = Program.State.LoadOrder.Keys.ToList();
                     foreach (string modFilter in ModsTrusted.Concat(_defaultModsTrusted))
                     {
                         modKeys.AddRange(modFiles.Where(modKey => modKey.FileName.String.Contains(modFilter, StringComparison.OrdinalIgnoreCase)));
                     }
-                    _trustedMods = new HashSet<IModListing<ISkyrimModGetter>>();
-                    foreach (ModKey modKey in modKeys)
-                    {
-                        IModListing<ISkyrimModGetter> mod = _state.LoadOrder[modKey];
-                        if (mod != null && mod.Mod != null)
-                        {
-                            _trustedMods.Add(mod);
-                        }
-                    }
+                    _trustedMods = new HashSet<ModKey>(modKeys);
                 }
                 return _trustedMods;
             }
         }
 
-        IPatcherState<ISkyrimMod, ISkyrimModGetter>? _state;
-        public IStaticGetter CheckTrusted(IPatcherState<ISkyrimMod, ISkyrimModGetter> state, IStaticGetter target, out bool updated, out string filename)
+        internal IModContext<ISkyrimMod, ISkyrimModGetter, IStatic, IStaticGetter> CheckTrusted(
+            List<IModContext<ISkyrimMod, ISkyrimModGetter, IStatic, IStaticGetter>> contexts,
+            IStaticGetter target, out bool trusted, out string filename)
         {
-            _state = state;
-            updated = false;
+            trusted = false;
             filename = String.Empty;
             if (TrustedMods.Count > 0)
             {
                 // check mods with better snow for this STAT record, use that target in the patch if present
-                IFormLinkGetter<IStaticGetter> statLink = target.AsLinkGetter();
-                foreach (IModListing<ISkyrimModGetter> mod in TrustedMods)
+                foreach (var context in contexts)
                 {
-                    if (mod!.Mod!.Statics.TryGetValue(target.FormKey, out var myStat) && myStat != null)
+                    if (TrustedMods.Contains(context.ModKey))
                     {
-                        filename = mod.ModKey.FileName;
-                        updated = true;
-                        return myStat;
+                        filename = context.ModKey.FileName;
+                        trusted = true;
+                        return context;
                     }
                 }
             }
-            return target;
+            // keep winning override
+            return contexts[0];
         }
 
         public bool IsNifValid(string nifPath)

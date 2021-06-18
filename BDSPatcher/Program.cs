@@ -111,8 +111,14 @@ namespace BDSPatcher
 
             return mappings;
         }
+        private static IPatcherState<ISkyrimMod, ISkyrimModGetter>? _state;
+        internal static IPatcherState<ISkyrimMod, ISkyrimModGetter> State
+        {
+            get { return _state!; }
+        }
         public static void RunPatch(IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
         {
+            _state = state;
             if (!state.LoadOrder.TryGetValue(BDSModKey, out IModListing<ISkyrimModGetter>? bdsMod) || bdsMod == null || bdsMod.Mod == null)
             {
                 throw new ArgumentException("Unable to get Better Dynamic Snow.esp plugin");
@@ -136,32 +142,48 @@ namespace BDSPatcher
                         continue;
                     }
                 }
-                IStaticGetter trueTarget = settings.CheckTrusted(state, target, out var updated, out var filename);
-                if (!materialMapping.TryGetValue(trueTarget.Material, out IMaterialObjectGetter? mapped) || mapped == null)
+                // we need to introspect the provenance of the record
+                var contexts = state.LinkCache.ResolveAllContexts<IStatic, IStaticGetter>(target.FormKey).ToList();
+                var currentWinner = contexts[0];
+                // Do not patch winning override from game files or USSEP
+                if (skipMods.Contains(currentWinner.ModKey))
                 {
+                    Console.WriteLine("Skip STAT {0}/{1:X8} with winning override in '{2}'",
+                        target.EditorID, target.FormKey.ID, target.FormKey.ModKey.FileName);
                     continue;
                 }
-                // If we get here, either last override needs a patch, or we want to force override with a trusted mod's snow MATO
-                if (!state.PatchMod.Statics.TryGetOrAddAsOverride<Static, IStaticGetter>(trueTarget.AsLink(), state.LinkCache, out var newStatic) || newStatic == null)
+
+                // Check whether we want to force override with a trusted mod's snow MATO
+                var trueContext = settings.CheckTrusted(contexts, target, out var trusted, out var filename);
+                var trueWinner = trueContext.Record;
+                if (trusted)
                 {
-                    continue;
-                }
-                if (!updated)
-                {
-                    // if BDS v2 updates this record, we always patch it. Otherwise, trust game files if this is a record from there.
-                    if (bdsMod.Mod.Statics.ContainsKey(trueTarget.FormKey) || !skipMods.Contains(trueTarget.FormKey.ModKey))
+                    // Use trusted mod MATO. If it's the winning override then no-op, to avoid ITPO.
+                    if (trueContext != currentWinner)
                     {
-                        var matName = trueTarget.Material;
-                        Console.WriteLine("MATO {0:X8} mapped to BDS {1:X8} in STAT {2}:{3}/{4:X8}",
-                            matName.FormKey.ID, mapped.FormKey.ID, trueTarget.FormKey.ModKey.FileName,
-                            trueTarget.EditorID, trueTarget.FormKey.ID);
-                        newStatic.Material = new FormLink<IMaterialObjectGetter>(mapped.FormKey);
+                        Console.WriteLine("Force-promote STAT {0}:{1}/{2:X8} from trusted mod '{3}'",
+                            trueContext.ModKey.FileName, trueWinner.EditorID, trueWinner.FormKey.ID, filename);
+                        state.PatchMod.Statics.GetOrAddAsOverride(trueWinner);
                     }
+                    else
+                    {
+                        Console.WriteLine("STAT {0}:{1}/{2:X8} from trusted mod '{3}' is already the winning override",
+                            trueWinner.FormKey.ModKey.FileName, trueWinner.EditorID, trueWinner.FormKey.ID, filename);
+                    }
+                    continue;
                 }
                 else
                 {
-                    Console.WriteLine("Force-promote STAT {0}:{1}/{2:X8} from trusted mod '{3}'",
-                        trueTarget.FormKey.ModKey.FileName, trueTarget.EditorID, trueTarget.FormKey.ID, filename);
+                    // MATO mapping may be required
+                    if (!materialMapping.TryGetValue(trueWinner.Material, out IMaterialObjectGetter? mapped) || mapped == null)
+                    {
+                        continue;
+                    }
+                    var newStatic = state.PatchMod.Statics.GetOrAddAsOverride(trueWinner);
+                    var matName = trueContext.Record.Material;
+                    Console.WriteLine("MATO {0:X8} mapped to BDS {1:X8} in STAT {2}:{3}/{4:X8}",
+                        matName.FormKey.ID, mapped.FormKey.ID, trueWinner.FormKey.ModKey.FileName, trueWinner.EditorID, trueWinner.FormKey.ID);
+                    newStatic.Material = new FormLink<IMaterialObjectGetter>(mapped.FormKey);
                 }
             }
         }

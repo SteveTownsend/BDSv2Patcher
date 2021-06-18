@@ -150,6 +150,7 @@ namespace BDSPatcher
                 {
                     Console.WriteLine("Skip STAT {0}/{1:X8} with winning override in '{2}'",
                         target.EditorID, target.FormKey.ID, target.FormKey.ModKey.FileName);
+                    continue;
                 }
 
                 // Check whether we want to force override with a trusted mod's snow MATO
